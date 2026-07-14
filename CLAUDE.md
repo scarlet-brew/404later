@@ -59,7 +59,8 @@ A bookmark manager where users can save, tag, search, and organize website bookm
 7. [ ] Frontend: Search bar and tag filtering
 
 ## Current Status
-- [x] Project initialized (git, package.json, .gitignore, README)
-- [ ] Dependencies installed
+- [x] Project initialized
+- [x] Dependencies installed
+- [x] Foundation complete (Express server, folder structure, health endpoint) — PR #1 merged
 - [ ] Database setup
 - [ ] Building features
