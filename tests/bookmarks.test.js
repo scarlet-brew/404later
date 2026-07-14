@@ -104,3 +104,42 @@ describe('POST /api/bookmarks', () => {
     expect(response.body.success).toBe(false);
   });
 });
+
+describe('GET /api/bookmarks', () => {
+  test('returns 200 with an array of bookmarks in the standard shape', async () => {
+    const response = await request(app).get('/api/bookmarks');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.error).toBeNull();
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
+
+  test('includes a newly created bookmark in the list', async () => {
+    const uniqueUrl = `https://list-me-${Date.now()}.com`;
+    await request(app)
+      .post('/api/bookmarks')
+      .send({ url: uniqueUrl, title: 'List Me' });
+
+    const response = await request(app).get('/api/bookmarks');
+    const urls = response.body.data.map((bookmark) => bookmark.url);
+
+    expect(urls).toContain(uniqueUrl);
+  });
+
+  test('returns bookmarks newest first', async () => {
+    const olderUrl = `https://older-${Date.now()}.com`;
+    const newerUrl = `https://newer-${Date.now()}.com`;
+
+    await request(app).post('/api/bookmarks').send({ url: olderUrl, title: 'Older' });
+    await request(app).post('/api/bookmarks').send({ url: newerUrl, title: 'Newer' });
+
+    const response = await request(app).get('/api/bookmarks');
+    const urls = response.body.data.map((bookmark) => bookmark.url);
+    const olderIndex = urls.indexOf(olderUrl);
+    const newerIndex = urls.indexOf(newerUrl);
+
+    // The more recently created bookmark should appear earlier in the list.
+    expect(newerIndex).toBeLessThan(olderIndex);
+  });
+});
