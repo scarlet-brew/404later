@@ -9,6 +9,9 @@ const insertBookmark = db.prepare(
    VALUES (?, ?, ?, ?)`
 );
 const getBookmarkById = db.prepare(`SELECT * FROM bookmarks WHERE id = ?`);
+const getAllBookmarks = db.prepare(
+  `SELECT * FROM bookmarks ORDER BY created_at DESC, id DESC`
+);
 
 // Treat null/undefined and empty/whitespace-only strings as "not provided".
 const isNonEmptyString = (value) =>
@@ -26,6 +29,26 @@ const normalizeTags = (tags) => {
   }
   return null;
 };
+
+// GET /api/bookmarks — list all bookmarks (newest first)
+router.get('/', (request, response) => {
+  try {
+    const bookmarks = getAllBookmarks.all();
+
+    return response.status(200).json({
+      success: true,
+      data: bookmarks,
+      error: null,
+    });
+  } catch (error) {
+    console.error('Failed to list bookmarks:', error);
+    return response.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to list bookmarks.',
+    });
+  }
+});
 
 // POST /api/bookmarks — create a new bookmark
 router.post('/', (request, response) => {
