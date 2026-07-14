@@ -19,6 +19,11 @@ const searchBookmarks = db.prepare(
    ORDER BY created_at DESC, id DESC`
 );
 const deleteBookmarkById = db.prepare(`DELETE FROM bookmarks WHERE id = ?`);
+const updateBookmarkById = db.prepare(
+  `UPDATE bookmarks
+   SET url = ?, title = ?, description = ?, tags = ?
+   WHERE id = ?`
+);
 
 // Parse a route :id param into a positive integer, or null if it isn't one.
 const parseId = (rawId) => {
@@ -138,6 +143,73 @@ router.post('/', (request, response) => {
       success: false,
       data: null,
       error: 'Failed to create bookmark.',
+    });
+  }
+});
+
+// PUT /api/bookmarks/:id — update a bookmark by id (full update)
+router.put('/:id', (request, response) => {
+  try {
+    const id = parseId(request.params.id);
+
+    // Reject ids that aren't positive integers.
+    if (id === null) {
+      return response.status(400).json({
+        success: false,
+        data: null,
+        error: 'The bookmark id must be a positive integer.',
+      });
+    }
+
+    const { url, title, description, tags } = request.body ?? {};
+
+    // url and title are required, same as when creating.
+    if (!isNonEmptyString(url)) {
+      return response.status(400).json({
+        success: false,
+        data: null,
+        error: 'A non-empty "url" is required.',
+      });
+    }
+    if (!isNonEmptyString(title)) {
+      return response.status(400).json({
+        success: false,
+        data: null,
+        error: 'A non-empty "title" is required.',
+      });
+    }
+
+    // 404 if there's nothing to update.
+    const existingBookmark = getBookmarkById.get(id);
+    if (!existingBookmark) {
+      return response.status(404).json({
+        success: false,
+        data: null,
+        error: `No bookmark found with id ${id}.`,
+      });
+    }
+
+    updateBookmarkById.run(
+      url.trim(),
+      title.trim(),
+      isNonEmptyString(description) ? description.trim() : null,
+      normalizeTags(tags),
+      id
+    );
+
+    const updatedBookmark = getBookmarkById.get(id);
+
+    return response.status(200).json({
+      success: true,
+      data: updatedBookmark,
+      error: null,
+    });
+  } catch (error) {
+    console.error('Failed to update bookmark:', error);
+    return response.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to update bookmark.',
     });
   }
 });

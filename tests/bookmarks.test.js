@@ -275,3 +275,107 @@ describe('DELETE /api/bookmarks/:id', () => {
     expect(negativeResponse.status).toBe(400);
   });
 });
+
+describe('PUT /api/bookmarks/:id', () => {
+  // Helper: create a bookmark and return its full record.
+  const createBookmark = async (overrides = {}) => {
+    const response = await request(app)
+      .post('/api/bookmarks')
+      .send({
+        url: `https://update-me-${Date.now()}-${Math.random()}.com`,
+        title: 'Original Title',
+        description: 'Original description',
+        tags: ['original'],
+        ...overrides,
+      });
+    return response.body.data;
+  };
+
+  test('updates an existing bookmark and returns 200 with the new values', async () => {
+    const { id } = await createBookmark();
+
+    const response = await request(app)
+      .put(`/api/bookmarks/${id}`)
+      .send({
+        url: 'https://updated.com',
+        title: 'Updated Title',
+        description: 'Updated description',
+        tags: ['updated', 'edited'],
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.error).toBeNull();
+    expect(response.body.data).toMatchObject({
+      id,
+      url: 'https://updated.com',
+      title: 'Updated Title',
+      description: 'Updated description',
+      tags: 'updated,edited',
+    });
+  });
+
+  test('persists the update so a later GET reflects the new values', async () => {
+    const { id } = await createBookmark();
+    await request(app)
+      .put(`/api/bookmarks/${id}`)
+      .send({ url: 'https://persisted.com', title: 'Persisted' });
+
+    const listResponse = await request(app).get('/api/bookmarks');
+    const updated = listResponse.body.data.find((bookmark) => bookmark.id === id);
+    expect(updated.url).toBe('https://persisted.com');
+    expect(updated.title).toBe('Persisted');
+  });
+
+  test('clears optional fields when they are omitted (full update)', async () => {
+    const { id } = await createBookmark();
+
+    const response = await request(app)
+      .put(`/api/bookmarks/${id}`)
+      .send({ url: 'https://minimal-update.com', title: 'Minimal' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.description).toBeNull();
+    expect(response.body.data.tags).toBeNull();
+  });
+
+  test('returns 404 when updating a non-existent id', async () => {
+    const response = await request(app)
+      .put('/api/bookmarks/99999999')
+      .send({ url: 'https://nope.com', title: 'Nope' });
+
+    expect(response.status).toBe(404);
+    expect(response.body.success).toBe(false);
+  });
+
+  test('returns 400 when url is missing', async () => {
+    const { id } = await createBookmark();
+
+    const response = await request(app)
+      .put(`/api/bookmarks/${id}`)
+      .send({ title: 'No URL' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/url/i);
+  });
+
+  test('returns 400 when title is missing', async () => {
+    const { id } = await createBookmark();
+
+    const response = await request(app)
+      .put(`/api/bookmarks/${id}`)
+      .send({ url: 'https://notitle.com' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/title/i);
+  });
+
+  test('returns 400 for a non-numeric id', async () => {
+    const response = await request(app)
+      .put('/api/bookmarks/not-a-number')
+      .send({ url: 'https://x.com', title: 'X' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/positive integer/i);
+  });
+});
