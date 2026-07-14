@@ -50,11 +50,11 @@ A bookmark manager where users can save, tag, search, and organize website bookm
 - Validate required fields and return helpful error messages
 
 ## Feature Roadmap (build in this order)
-1. [ ] API: POST /api/bookmarks — Add a bookmark (url, title, description, tags)
-2. [ ] API: GET /api/bookmarks — List all bookmarks
-3. [ ] API: GET /api/bookmarks/search — Search by title or tag
-4. [ ] API: DELETE /api/bookmarks/:id — Delete a bookmark
-5. [ ] API: PUT /api/bookmarks/:id — Update a bookmark
+1. [x] API: POST /api/bookmarks — Add a bookmark (url, title, description, tags)
+2. [x] API: GET /api/bookmarks — List all bookmarks
+3. [x] API: GET /api/bookmarks/search — Search by title or tag
+4. [x] API: DELETE /api/bookmarks/:id — Delete a bookmark
+5. [x] API: PUT /api/bookmarks/:id — Update a bookmark
 6. [ ] Frontend: Page to view and add bookmarks
 7. [ ] Frontend: Search bar and tag filtering
 
@@ -62,5 +62,6 @@ A bookmark manager where users can save, tag, search, and organize website bookm
 - [x] Project initialized
 - [x] Dependencies installed
 - [x] Foundation complete (Express server, folder structure, health endpoint) — PR #1 merged
-- [ ] Database setup
-- [ ] Building features
+- [x] Database setup (better-sqlite3, bookmarks table) — PR #2 merged
+- [x] REST API complete — all 5 endpoints (POST, GET, GET/search, DELETE, PUT), 28 tests passing — PRs #2–#6 merged
+- [ ] Frontend (in progress)
