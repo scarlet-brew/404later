@@ -12,6 +12,12 @@ const getBookmarkById = db.prepare(`SELECT * FROM bookmarks WHERE id = ?`);
 const getAllBookmarks = db.prepare(
   `SELECT * FROM bookmarks ORDER BY created_at DESC, id DESC`
 );
+// LIKE is case-insensitive for ASCII in SQLite; matches title OR tags.
+const searchBookmarks = db.prepare(
+  `SELECT * FROM bookmarks
+   WHERE title LIKE ? OR tags LIKE ?
+   ORDER BY created_at DESC, id DESC`
+);
 
 // Treat null/undefined and empty/whitespace-only strings as "not provided".
 const isNonEmptyString = (value) =>
@@ -46,6 +52,40 @@ router.get('/', (request, response) => {
       success: false,
       data: null,
       error: 'Failed to list bookmarks.',
+    });
+  }
+});
+
+// GET /api/bookmarks/search?q=term — search by title or tag
+// Defined before any "/:id" routes so "search" isn't treated as an id.
+router.get('/search', (request, response) => {
+  try {
+    const { q } = request.query;
+
+    // The search term is required and must be a non-empty string.
+    if (!isNonEmptyString(q)) {
+      return response.status(400).json({
+        success: false,
+        data: null,
+        error: 'A non-empty "q" query parameter is required.',
+      });
+    }
+
+    // Wrap the term in wildcards for a partial, case-insensitive match.
+    const likePattern = `%${q.trim()}%`;
+    const matches = searchBookmarks.all(likePattern, likePattern);
+
+    return response.status(200).json({
+      success: true,
+      data: matches,
+      error: null,
+    });
+  } catch (error) {
+    console.error('Failed to search bookmarks:', error);
+    return response.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to search bookmarks.',
     });
   }
 });

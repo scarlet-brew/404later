@@ -143,3 +143,71 @@ describe('GET /api/bookmarks', () => {
     expect(newerIndex).toBeLessThan(olderIndex);
   });
 });
+
+describe('GET /api/bookmarks/search', () => {
+  // Seed bookmarks with distinctive, unique tokens so searches are isolated
+  // from data created by other tests in this shared database.
+  const token = `zqx${Date.now()}`;
+  const titleUrl = `https://title-match-${token}.com`;
+  const tagUrl = `https://tag-match-${token}.com`;
+
+  beforeAll(async () => {
+    await request(app)
+      .post('/api/bookmarks')
+      .send({ url: titleUrl, title: `A ${token} Article`, tags: ['reading'] });
+    await request(app)
+      .post('/api/bookmarks')
+      .send({ url: tagUrl, title: 'Unrelated Title', tags: [token, 'misc'] });
+  });
+
+  test('finds a bookmark by a partial, case-insensitive title match', async () => {
+    const response = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: token.toUpperCase() });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.error).toBeNull();
+    const urls = response.body.data.map((bookmark) => bookmark.url);
+    expect(urls).toContain(titleUrl);
+  });
+
+  test('finds a bookmark by tag match', async () => {
+    const response = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: token });
+
+    expect(response.status).toBe(200);
+    const urls = response.body.data.map((bookmark) => bookmark.url);
+    // The token appears in one title and one tag — both should be returned.
+    expect(urls).toContain(titleUrl);
+    expect(urls).toContain(tagUrl);
+  });
+
+  test('returns an empty array when nothing matches', async () => {
+    const response = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: 'no-such-bookmark-anywhere-xyz987' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toEqual([]);
+  });
+
+  test('returns 400 when the q parameter is missing', async () => {
+    const response = await request(app).get('/api/bookmarks/search');
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toMatch(/q/i);
+  });
+
+  test('returns 400 when the q parameter is empty/whitespace', async () => {
+    const response = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: '   ' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+  });
+});
