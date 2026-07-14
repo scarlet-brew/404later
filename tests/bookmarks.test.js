@@ -211,3 +211,67 @@ describe('GET /api/bookmarks/search', () => {
     expect(response.body.success).toBe(false);
   });
 });
+
+describe('DELETE /api/bookmarks/:id', () => {
+  // Helper: create a bookmark and return its id.
+  const createBookmark = async () => {
+    const response = await request(app)
+      .post('/api/bookmarks')
+      .send({ url: `https://delete-me-${Date.now()}-${Math.random()}.com`, title: 'Delete Me' });
+    return response.body.data.id;
+  };
+
+  test('deletes an existing bookmark and returns 200 with the deleted record', async () => {
+    const id = await createBookmark();
+
+    const response = await request(app).delete(`/api/bookmarks/${id}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.error).toBeNull();
+    expect(response.body.data.id).toBe(id);
+  });
+
+  test('the bookmark no longer appears in the list after deletion', async () => {
+    const id = await createBookmark();
+    await request(app).delete(`/api/bookmarks/${id}`);
+
+    const listResponse = await request(app).get('/api/bookmarks');
+    const ids = listResponse.body.data.map((bookmark) => bookmark.id);
+    expect(ids).not.toContain(id);
+  });
+
+  test('returns 404 when deleting a non-existent id', async () => {
+    const response = await request(app).delete('/api/bookmarks/99999999');
+
+    expect(response.status).toBe(404);
+    expect(response.body.success).toBe(false);
+    expect(response.body.data).toBeNull();
+  });
+
+  test('returns 404 when deleting the same bookmark twice', async () => {
+    const id = await createBookmark();
+
+    const first = await request(app).delete(`/api/bookmarks/${id}`);
+    const second = await request(app).delete(`/api/bookmarks/${id}`);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(404);
+  });
+
+  test('returns 400 for a non-numeric id', async () => {
+    const response = await request(app).delete('/api/bookmarks/not-a-number');
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toMatch(/positive integer/i);
+  });
+
+  test('returns 400 for a zero or negative id', async () => {
+    const zeroResponse = await request(app).delete('/api/bookmarks/0');
+    const negativeResponse = await request(app).delete('/api/bookmarks/-5');
+
+    expect(zeroResponse.status).toBe(400);
+    expect(negativeResponse.status).toBe(400);
+  });
+});
