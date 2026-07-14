@@ -18,6 +18,13 @@ const searchBookmarks = db.prepare(
    WHERE title LIKE ? OR tags LIKE ?
    ORDER BY created_at DESC, id DESC`
 );
+const deleteBookmarkById = db.prepare(`DELETE FROM bookmarks WHERE id = ?`);
+
+// Parse a route :id param into a positive integer, or null if it isn't one.
+const parseId = (rawId) => {
+  const id = Number(rawId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
 
 // Treat null/undefined and empty/whitespace-only strings as "not provided".
 const isNonEmptyString = (value) =>
@@ -131,6 +138,48 @@ router.post('/', (request, response) => {
       success: false,
       data: null,
       error: 'Failed to create bookmark.',
+    });
+  }
+});
+
+// DELETE /api/bookmarks/:id — delete a bookmark by id
+router.delete('/:id', (request, response) => {
+  try {
+    const id = parseId(request.params.id);
+
+    // Reject ids that aren't positive integers.
+    if (id === null) {
+      return response.status(400).json({
+        success: false,
+        data: null,
+        error: 'The bookmark id must be a positive integer.',
+      });
+    }
+
+    // 404 if there's nothing to delete.
+    const existingBookmark = getBookmarkById.get(id);
+    if (!existingBookmark) {
+      return response.status(404).json({
+        success: false,
+        data: null,
+        error: `No bookmark found with id ${id}.`,
+      });
+    }
+
+    deleteBookmarkById.run(id);
+
+    // Return the deleted record so the client can confirm what was removed.
+    return response.status(200).json({
+      success: true,
+      data: existingBookmark,
+      error: null,
+    });
+  } catch (error) {
+    console.error('Failed to delete bookmark:', error);
+    return response.status(500).json({
+      success: false,
+      data: null,
+      error: 'Failed to delete bookmark.',
     });
   }
 });
