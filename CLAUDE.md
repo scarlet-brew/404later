@@ -55,13 +55,14 @@ A bookmark manager where users can save, tag, search, and organize website bookm
 3. [x] API: GET /api/bookmarks/search — Search by title or tag
 4. [x] API: DELETE /api/bookmarks/:id — Delete a bookmark
 5. [x] API: PUT /api/bookmarks/:id — Update a bookmark
-6. [ ] Frontend: Page to view and add bookmarks
-7. [ ] Frontend: Search bar and tag filtering
+6. [x] Frontend: Page to view and add bookmarks
+7. [x] Frontend: Search bar and tag filtering
 
 ## Current Status
 - [x] Project initialized
 - [x] Dependencies installed
 - [x] Foundation complete (Express server, folder structure, health endpoint) — PR #1 merged
 - [x] Database setup (better-sqlite3, bookmarks table) — PR #2 merged
-- [x] REST API complete — all 5 endpoints (POST, GET, GET/search, DELETE, PUT), 28 tests passing — PRs #2–#6 merged
-- [ ] Frontend (in progress)
+- [x] REST API complete — all 5 endpoints (POST, GET, GET/search, DELETE, PUT), 29 tests passing — PRs #2–#6 merged
+- [x] Frontend complete — view, add, edit, delete, search, and tag filtering — PR #7 merged
+- [x] All roadmap features complete 🎉
