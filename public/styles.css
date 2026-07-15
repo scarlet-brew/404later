@@ -230,3 +230,92 @@ main {
   color: var(--text-muted);
   padding: 1.5rem 0;
 }
+
+/* Form actions (submit + cancel) */
+.form-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Search row */
+.search-row {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.search-row input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.active-filter {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Per-bookmark action buttons */
+.bookmark-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.btn-edit {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-edit:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Clickable tag pills */
+.tag {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tag:hover {
+  background: #dbe3ff;
+}

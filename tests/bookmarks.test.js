@@ -210,6 +210,30 @@ describe('GET /api/bookmarks/search', () => {
     expect(response.status).toBe(400);
     expect(response.body.success).toBe(false);
   });
+
+  test('treats % as a literal, not a wildcard', async () => {
+    const literalUrl = `https://literal-${token}.com`;
+    await request(app)
+      .post('/api/bookmarks')
+      .send({ url: literalUrl, title: `${token} 50% off deal` });
+
+    // Searching a bare "%" must not match everything — only titles/tags
+    // that literally contain a percent sign.
+    const wildcardResponse = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: '%' });
+    const wildcardUrls = wildcardResponse.body.data.map((b) => b.url);
+    // The token-only bookmarks (no % in them) should NOT be returned.
+    expect(wildcardUrls).not.toContain(titleUrl);
+    expect(wildcardUrls).toContain(literalUrl);
+
+    // A literal "50%" should still match the deal.
+    const literalResponse = await request(app)
+      .get('/api/bookmarks/search')
+      .query({ q: '50%' });
+    const literalUrls = literalResponse.body.data.map((b) => b.url);
+    expect(literalUrls).toContain(literalUrl);
+  });
 });
 
 describe('DELETE /api/bookmarks/:id', () => {

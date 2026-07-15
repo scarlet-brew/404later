@@ -13,9 +13,10 @@ const getAllBookmarks = db.prepare(
   `SELECT * FROM bookmarks ORDER BY created_at DESC, id DESC`
 );
 // LIKE is case-insensitive for ASCII in SQLite; matches title OR tags.
+// ESCAPE '\' lets us treat %, _ and \ in the search term as literals.
 const searchBookmarks = db.prepare(
   `SELECT * FROM bookmarks
-   WHERE title LIKE ? OR tags LIKE ?
+   WHERE title LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\'
    ORDER BY created_at DESC, id DESC`
 );
 const deleteBookmarkById = db.prepare(`DELETE FROM bookmarks WHERE id = ?`);
@@ -83,8 +84,10 @@ router.get('/search', (request, response) => {
       });
     }
 
-    // Wrap the term in wildcards for a partial, case-insensitive match.
-    const likePattern = `%${q.trim()}%`;
+    // Escape LIKE special characters so %, _ and \ are matched literally,
+    // then wrap in wildcards for a partial, case-insensitive match.
+    const escapedTerm = q.trim().replace(/[\\%_]/g, '\\$&');
+    const likePattern = `%${escapedTerm}%`;
     const matches = searchBookmarks.all(likePattern, likePattern);
 
     return response.status(200).json({
